@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.env
+*.sqlite3
+*.log
+node_modules/
+/edtechai/Lib/
+/edtechai/Scripts/
+/edtechai/include/
+*.pyc
+__pycache__/
+.env
+

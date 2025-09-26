@@ -1,0 +1,66 @@
+----------------------------------------------------------------------
+Virtual Environments (Python environments, often venv or conda)
+----------------------------------------------------------------------
+venv/
+.venv/
+env/
+.env/
+.python-version
+
+----------------------------------------------------------------------
+Byte-compiled / temporary files
+----------------------------------------------------------------------
+pycache/
+*.py[cod]
+*$py.class
+
+----------------------------------------------------------------------
+IDEs and Editors
+----------------------------------------------------------------------
+Visual Studio Code
+.vscode/
+
+PyCharm/IntelliJ
+.idea/
+
+Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+Jupyter/Notebooks (if you used them)
+.ipynb_checkpoints
+
+----------------------------------------------------------------------
+OS and Miscellaneous Files
+----------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+----------------------------------------------------------------------
+Logging and Testing
+----------------------------------------------------------------------
+*.log
+.coverage
+.pytest_cache/
+
+----------------------------------------------------------------------
+PROJECT SPECIFIC - RAG & FASTAPI
+----------------------------------------------------------------------
+Environment file (contains API keys)
+.env
+
+It's CRITICAL to ignore the .env file for security!
+RAG Data Persistence
+ChromaDB persistence directory (large database files)
+This directory should be generated on deployment, not committed.
+data/vector_store/
+
+Downloaded Embedding Models (Can be large)
+Sentence Transformer models are typically saved in the user's cache,
+but if they were saved locally:
+.cache/
+hf_cache/
+
+FastAPI/Uvicorn cache files (if any)
+.uvicorn/
