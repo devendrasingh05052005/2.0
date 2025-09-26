@@ -1,0 +1,61 @@
+/* -------------------------------------------------------------------
+|  StudyBuddyApp.css - Custom CSS to enhance Tailwind classes 
+|  Focuses on typography and clean resets.
+------------------------------------------------------------------- */
+
+/* 1. Global Font and Reset */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    background-color: #f4f4f4; /* Match Tailwind's bg-gray-100 */
+    margin: 0;
+    padding: 0;
+}
+
+/* 2. Custom Styles for Input Focus (Tailwind override) */
+input:focus,
+select:focus,
+button:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); /* Blue focus ring (similar to focus:ring-blue-500) */
+}
+
+/* 3. Subtle Hover Transitions for Buttons (To make interactivity smoother) */
+.transition {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 4. Custom Animation for Loading */
+@keyframes loading-pulse {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.animate-pulse {
+    animation: loading-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 5. Dashboard Header Styling */
+.text-4xl.font-extrabold {
+    letter-spacing: -0.025em; /* Tighten kerning for bold headings */
+}
+
+/* 6. Fix for the mock test result area scroll (if needed) */
+.min-h-\[300px\] {
+    overflow-y: auto; /* Ensure scrolling inside the results card */
+}
+
+/* 7. Specific fix for the status card background contrast */
+.bg-white.shadow-lg {
+    transition: transform 0.2s ease-in-out;
+}
+
+.bg-white.shadow-lg:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
