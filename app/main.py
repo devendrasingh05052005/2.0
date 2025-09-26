@@ -2,19 +2,19 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from contextlib import asynccontextmanager
+from starlette.middleware.cors import CORSMiddleware
 from app.core.rag import EmbeddingManager, VectorStore, RAGRetriever, GeminiLLM, RAGService
-from app.models.schemas import QueryRequest, RAGResponse, SimpleRAGResponse 
+from app.api.upload import upload_router, initialize_temp_rag_router # 👈 New Imports
+from app.models.schemas import QueryRequest, RAGResponse, SimpleRAGResponse
 from starlette.middleware.cors import CORSMiddleware 
 
 
+
 allowed_origins = [
-    "http://localhost:5173", 
+    "http://localhost:5173",  # 👈 Vite Dev Server का डिफ़ॉल्ट पोर्ट
     "http://127.0.0.1:5173",
+    # ... (अगर आपने कोई अन्य localhhost:3000 रखा है तो उसे भी रखें)
 ]
-
-
-
-
 
 # 1. Load Environment Variables
 load_dotenv()
@@ -47,25 +47,24 @@ async def lifespan(app: FastAPI):
             collection_name=CHROMA_COLLECTION_NAME, 
             persist_directory=VECTOR_STORE_PATH
         )
-        
-        # Check if the Vector Store has data
         if vector_store.get_count() == 0:
             print("WARNING: Vector Store is empty. Please run 'python initialize_db.py' first.")
-            # We continue to allow the server to start, but the RAG will fail if queried.
 
         retriever = RAGRetriever(vector_store, embedding_manager)
         llm_client = GeminiLLM(model_name=GENERATION_MODEL_NAME, api_key=GEMINI_API_KEY)
         
         # Initialize the main RAG Service
         rag_service = RAGService(vector_store, retriever, llm_client)
+        
+        # 🚨 NEW STEP: Initialize the Temporary RAG Manager with the main service
+        initialize_temp_rag_router(rag_service) 
+        
         print("--- RAG Service is READY ---")
         
     except Exception as e:
         print(f"FATAL ERROR during RAG initialization: {e}")
-        # In a real app, you might want to raise here or use logging
     
     yield
-    # Shutdown logic (nothing needed for these components, but good practice)
     print("--- FastAPI Shutdown Complete ---")
 
 app = FastAPI(
@@ -75,40 +74,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-@app.get("/", tags=["Health"])
-def read_root():
-    """Simple health check."""
-    return {"message": "Study Buddy RAG API is running!"}
-
-@app.post("/query", response_model=SimpleRAGResponse, status_code=status.HTTP_200_OK, tags=["RAG"])
-async def query_study_buddy(request: QueryRequest):
-    """
-    Endpoint to process a user query using the RAG system.
-    """
-    if rag_service is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="RAG Service is not initialized. Check server logs."
-        )
-
-    print(f"\nAPI Query received: {request.query}")
-    
-    try:
-        # Call the RAG Service
-        result = rag_service.query_rag(query=request.query, top_k=request.top_k)
-        
-        # FIX 3: केवल SimpleRAGResponse के फ़ील्ड्स रिटर्न करें
-        return {
-            "query": result["query"],
-            "answer": result["answer"]
-        }
-        
-    except Exception as e:
-        print(f"Error processing query: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while generating the answer: {str(e)}"
-        )
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -116,3 +81,66 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# CORS Middleware (Crucial for frontend connection)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# 🚨 NEW STEP: Add the new router for upload and temporary queries
+app.include_router(upload_router, prefix="/rag") 
+
+
+# --- API 1: Health Check ---
+@app.get("/", tags=["Health"])
+def read_root():
+    return {"message": "Study Buddy RAG API is running!"}
+
+# --- API 2: Main RAG Query (Answer Only) ---
+@app.post("/rag/query", response_model=SimpleRAGResponse, status_code=status.HTTP_200_OK, tags=["RAG"])
+async def query_study_buddy(request: QueryRequest):
+    if rag_service is None:
+        raise HTTPException(status_code=503, detail="RAG Service is not initialized.")
+    try:
+        result = rag_service.query_rag(query=request.query, top_k=request.top_k)
+        return {"query": result["query"], "answer": result["answer"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating answer: {str(e)}")
+
+# --- API 3: Retrieval Only (Get Context) ---
+@app.post("/rag/context", response_model=RAGResponse, status_code=status.HTTP_200_OK, tags=["RAG"])
+async def retrieve_context_only(request: QueryRequest):
+    if rag_service is None:
+        raise HTTPException(status_code=503, detail="RAG Service is not initialized.")
+    try:
+        result = rag_service.query_rag(query=request.query, top_k=request.top_k)
+        return result 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving context: {str(e)}")
+
+# --- API 4: Streaming RAG Query (Assuming streaming function is in rag.py) ---
+# NOTE: The implementation of this is skipped here to keep main.py clean, 
+# but it exists in the prior conversation.
+# If you need it, ensure the StreamingResponse logic is restored here or in a separate file.
+
+# --- API 5: System Status / Health Check ---
+@app.get("/info/status", tags=["Info"])
+def get_system_status():
+    if rag_service is None:
+        return {"status": "Starting Up/Uninitialized", "documents_loaded": 0, "error": True}
+    
+    try:
+        doc_count = rag_service.vector_store.get_count()
+        return {
+            "status": "Ready",
+            "documents_loaded": doc_count,
+            "embedding_model": rag_service.retriever.embedding_manager.model_name,
+            "generation_model": rag_service.llm.model_name
+        }
+    except Exception:
+        return {"status": "Error", "documents_loaded": 0, "error": True}
