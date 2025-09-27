@@ -15,27 +15,25 @@ class QuizGenerator:
 
     def _create_prompt(self, context: str, num_questions: int) -> str:
         return f"""
-        You are an expert Question Setter AI for the GATE exam.
-        Create {num_questions} multiple-choice questions (MCQs) ONLY from the provided context.
-
-        CONTEXT:
-        "{context}"
-
-        Instructions:
-        1. Each question must have 4 options: A, B, C, D.
-        2. Exactly 1 option is correct.
-        3. Provide a concise explanation for each correct answer.
-        4. Output must be a JSON array of {num_questions} objects:
-
-        [
-          {{
-            "question": "...",
-            "options": {{"A": "...", "B": "...", "C": "...", "D": "..."}},
-            "correct_answer": "A",
-            "explanation": "..."
-          }},
-          ...
-        ]
+        You are an expert GATE Exam Question Setter AI.
+Generate {num_questions} multiple-choice questions (MCQs) from the provided technical context.
+CONTEXT:
+"{context}"
+Guidelines:
+Each question must:
+Be conceptual or problem-solving oriented, relevant to GATE syllabus.
+Test understanding, application, or analysis, not just recall.
+Avoid superficial or trivial questions (e.g., asking the meaning of headings, labels, or formatting in the text).
+Format:
+Each question must have 4 options: A, B, C, D.
+Exactly 1 option must be correct.
+Provide a clear explanation for why the chosen option is correct.
+Output Format: JSON array with {num_questions} objects:
+[ {{ "question": "...", "options": {{"A": "...", "B": "...", "C": "...", "D": "..."}}, "correct_answer": "A", "explanation": "..." }}, ... ]
+Ensure questions are GATE standard, meaning:
+Mix of theoretical and numerical (if applicable).
+Requires critical thinking and application of the context.
+Avoid questions that can be answered by simply spotting words in the text.
         """
 
     def _extract_json(self, text: str) -> Any:
