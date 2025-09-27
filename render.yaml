@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: fastapi-backend   # Service ka naam
+    name: edtechai-backend
     env: python
-    plan: free              # free plan use hoga
+    plan: free
     region: oregon
-    rootDir: backend        # backend folder deploy hoga (frontend ignore)
+    rootDir: backend
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn -k uvicorn.workers.UvicornWorker main:app"
+    startCommand: "gunicorn -k uvicorn.workers.UvicornWorker app.main:app"
