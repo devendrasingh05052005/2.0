@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: fastapi-backend   # Service ka naam
+    env: python
+    plan: free              # free plan use hoga
+    region: oregon
+    rootDir: backend        # backend folder deploy hoga (frontend ignore)
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -k uvicorn.workers.UvicornWorker main:app"
