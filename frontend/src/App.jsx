@@ -3,7 +3,7 @@ import './App.css';
 
 function App() {
  return (
-   <div className="app-container"> {/* <--- यह क्लास यहाँ है */}
+   <div className="app-container"> {}
      <StudyBuddyApp />
    </div>
  );
